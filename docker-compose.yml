@@ -1,0 +1,29 @@
+version: "3.7"
+services:
+  banco:
+    image: "postgres:latest"
+    container_name: "conversation-db-postgres"
+    restart: always
+    environment:
+      POSTGRES_USER: matheus_postgres
+      POSTGRES_PASSWORD: matheus_postgres
+      POSTGRES_DB: conversationDatabase
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    container_name: "conversation-api"
+    build:
+      context: "./conversation-api"
+      dockerfile: Dockerfile-API
+    restart: always
+    ports:
+      - "7000:8080"
+    depends_on:
+      - banco
+
+volumes:
+  postgres_data:
+
