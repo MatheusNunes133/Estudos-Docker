@@ -52,6 +52,7 @@ public class JWTService {
     //Gerando o Token
     public String generateToken(UserModel userDetails){
         Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userDetails.getId());
         claims.put("roles", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
         claims.put("username", userDetails.getName());
         claims.put("nickname", userDetails.getNickname());
