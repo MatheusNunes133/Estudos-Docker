@@ -1,6 +1,7 @@
 package com.api.conversation.conversation_api.models;
 
 import com.api.conversation.conversation_api.enuns.UserRolesEnum;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,7 +25,7 @@ public class UserModel implements UserDetails {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column()
+    @Column(nullable = false)
     private final LocalDateTime createdUser = LocalDateTime.now();
 
     @Column(nullable = false)
@@ -36,8 +37,17 @@ public class UserModel implements UserDetails {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "sender")
+    private List<MessageModel> sentMessages;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "recipient")
+    private List<MessageModel> receivedMessages;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -60,5 +70,25 @@ public class UserModel implements UserDetails {
     @Override
     public String getUsername() {
         return this.email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return false;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return false;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return false;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return false;
     }
 }

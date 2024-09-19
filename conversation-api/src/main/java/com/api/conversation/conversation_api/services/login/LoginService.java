@@ -48,15 +48,14 @@ public class LoginService {
             }
 
 
-        }catch (Exception e){
-            if(e instanceof UserNotFoundException){
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }catch (Exception error){
+            if(error instanceof UserNotFoundException){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", error.getMessage()));
             }
-            if(e instanceof PasswordNotMatchException){
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
-            }else{
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
+            if(error instanceof PasswordNotMatchException){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", error.getMessage()));
             }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", error.getMessage()));
         }
     }
 }
