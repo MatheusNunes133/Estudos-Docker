@@ -1,5 +1,6 @@
 package com.api.conversation.conversation_api.config.webSecurity;
 
+import com.api.conversation.conversation_api.config.cors.CorsConfiguration;
 import com.api.conversation.conversation_api.config.webSecurity.jwt.JWTAuthenticationFilter;
 import com.api.conversation.conversation_api.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -33,6 +38,7 @@ public class WebSecurity {
 
     private static final String[] AUTH_WHITE_LIST = {
             "/login",
+            "/conversation/connect/**",
             "/user/signup",
             "/v3/api-docs/**",
             "/nobullying/api-doc/swagger-ui/**",
