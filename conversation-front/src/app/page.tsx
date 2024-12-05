@@ -6,6 +6,7 @@ import { setCookie } from "cookies-next";
 import style from "./page.module.scss";
 import {
   Button,
+  CircularProgress,
   IconButton,
   InputAdornment,
   Link,
@@ -18,8 +19,10 @@ import { isEmail } from "validator";
 import { toastError } from "@/services/toast.service";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LoginIcon from "@mui/icons-material/Login";
+import { useRouter } from "next/navigation";
 
 export default function App() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -53,9 +56,13 @@ export default function App() {
 
       const token = (await Api.post("/login", bodyLogin)).data;
       setCookie("token", token.token);
-      window.location.replace("/chat");
+      router.replace("/chat");
     } catch (error: any) {
-      toastError(error.response.data.error);
+      toastError(
+        error.response === undefined
+          ? "Erro ao efetuar login!"
+          : error.response.data.error
+      );
       setIsLoading(false);
     }
   }
@@ -105,9 +112,12 @@ export default function App() {
           loading={isLoading}
           className={style.loginButton}
           onClick={login}
-          endIcon={<LoginIcon />}
+          variant="contained"
+          loadingIndicator={
+            <CircularProgress size={24} sx={{ color: "white" }} />
+          }
         >
-          Entrar
+          {!isLoading && "Entrar"}
         </LoadingButton>
         <Button href="/cadastro" className={style.signupButton}>
           CADASTRAR-SE
