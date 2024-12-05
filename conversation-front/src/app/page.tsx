@@ -1,46 +1,118 @@
-"use client"
+"use client";
 
-import { Api } from "@/services/axios.service"
-import React, { useState } from "react"
-import {setCookie} from "cookies-next"
+import { Api } from "@/services/axios.service";
+import React, { useState } from "react";
+import { setCookie } from "cookies-next";
+import style from "./page.module.scss";
+import {
+  Button,
+  IconButton,
+  InputAdornment,
+  Link,
+  TextField,
+} from "@mui/material";
+import { LoadingButton } from "@mui/lab";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { isEmail } from "validator";
+import { toastError } from "@/services/toast.service";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import LoginIcon from "@mui/icons-material/Login";
 
-export default function App(){
+export default function App() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [emailError, setEmailError] = useState(false);
+  const [passwordError, setpasswordError] = useState(false);
 
-  async function login(){
-    if(!email){
-      alert("Email não informado!")
-      return
+  function handleShowPassword() {
+    setShowPassword(!showPassword);
+  }
+
+  async function login() {
+    setIsLoading(true);
+    if (!email || !isEmail(email)) {
+      setEmailError(true);
+      setIsLoading(false);
+      return;
     }
-    if(!password){
-      alert("Senha não informada!")
-      return
+    if (!password) {
+      setpasswordError(true);
+      setIsLoading(false);
+      return;
     }
 
     try {
       const bodyLogin = {
         email,
-        password
-      }
-  
-      const token = (await Api.post("/login", bodyLogin)).data
-      setCookie("token", token.token)
-      window.location.replace("/chat")
-    } catch (error:any) {
-      alert(error.response.data.error)
-    }
+        password,
+      };
 
+      const token = (await Api.post("/login", bodyLogin)).data;
+      setCookie("token", token.token);
+      window.location.replace("/chat");
+    } catch (error: any) {
+      toastError(error.response.data.error);
+      setIsLoading(false);
+    }
   }
 
-  return(
-    <>
-    <div>
-      <input type="text" placeholder="Email..." value={email} onChange={(event)=>setEmail(event.target.value)}/>
-      <input type="password" placeholder="Password..." value={password} onChange={(event)=>setPassword(event.target.value)}/>
-    </div>
-    <button type="submit" onClick={login}>LOGIN</button>
-    </>
-  )
+  return (
+    <main className={style.container}>
+      <div className={style.login}>
+        <AccountCircleIcon className={style.icon} />
+        <div className={style.credentials}>
+          <TextField
+            error={emailError}
+            helperText={emailError ? "Email Incorreto!" : ""}
+            onFocus={() => {
+              setEmailError(false);
+            }}
+            type="email"
+            label="Email"
+            variant="outlined"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+          <TextField
+            error={passwordError}
+            helperText={passwordError ? "Informe uma senha" : ""}
+            onFocus={() => {
+              setpasswordError(false);
+            }}
+            type={showPassword ? "text" : "password"}
+            label="Senha"
+            variant="outlined"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={handleShowPassword}>
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+        </div>
+        <LoadingButton
+          loading={isLoading}
+          className={style.loginButton}
+          onClick={login}
+          endIcon={<LoginIcon />}
+        >
+          Entrar
+        </LoadingButton>
+        <Button href="/cadastro" className={style.signupButton}>
+          CADASTRAR-SE
+        </Button>
+      </div>
+    </main>
+  );
 }

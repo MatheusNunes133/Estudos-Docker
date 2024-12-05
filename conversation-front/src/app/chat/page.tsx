@@ -12,7 +12,18 @@ import { format } from "date-fns";
 export default function Chat() {
   const token = getCookie("token") as string;
 
-  const { userId, sub }: IPayload = decodeToken(token) as any;
+  const [userId, setUserId] = useState("");
+  const [sub, setSub] = useState("");
+
+  useEffect(() => {
+    if (token) {
+      const decodedToken: IPayload = decodeToken(token) as any;
+      if (decodedToken) {
+        setUserId(decodedToken.userId);
+        setSub(decodedToken.sub);
+      }
+    }
+  }, [token]);
 
   const webSocket = useWebSocket(
     "http://localhost:8080/conversation/connect",
