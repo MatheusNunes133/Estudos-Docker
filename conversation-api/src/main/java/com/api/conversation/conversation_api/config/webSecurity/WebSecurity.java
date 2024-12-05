@@ -39,10 +39,7 @@ public class WebSecurity {
     private static final String[] AUTH_WHITE_LIST = {
             "/login",
             "/conversation/connect/**",
-            "/user/signup",
-            "/v3/api-docs/**",
-            "/nobullying/api-doc/swagger-ui/**",
-            "/nobullying/api-doc/swagger-ui.html",
+            "/user/signup"
 
     };
 

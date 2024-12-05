@@ -39,7 +39,7 @@ public class LoginService {
             }
 
             if(encoder.matches(dto.password(), foundUser.get().getPassword())){
-                System.out.println(foundUser.get().getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
+
                 String jwt = jwtService.generateToken(foundUser.get());
 
                 return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("token", jwt));
