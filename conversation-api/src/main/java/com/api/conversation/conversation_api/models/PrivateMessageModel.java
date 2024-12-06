@@ -15,7 +15,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MessageModel {
+public class PrivateMessageModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

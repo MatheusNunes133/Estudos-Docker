@@ -43,11 +43,11 @@ public class UserModel implements UserDetails {
 
     @JsonIgnore
     @OneToMany(mappedBy = "sender")
-    private List<MessageModel> sentMessages;
+    private List<PrivateMessageModel> sentMessages;
 
     @JsonIgnore
     @OneToMany(mappedBy = "recipient")
-    private List<MessageModel> receivedMessages;
+    private List<PrivateMessageModel> receivedMessages;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

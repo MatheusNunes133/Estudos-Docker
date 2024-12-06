@@ -49,6 +49,16 @@ public class WebSecurity {
                         httpRequests.requestMatchers(AUTH_WHITE_LIST).permitAll()
                                 .anyRequest().authenticated())
                 .csrf(csrf->csrf.disable())
+                .cors(cors -> cors // Configuração de CORS declarativa
+                        .configurationSource(request -> {
+                            var corsConfig = new org.springframework.web.cors.CorsConfiguration();
+                            corsConfig.addAllowedOrigin("http://localhost:3000");
+                            corsConfig.addAllowedMethod("*");
+                            corsConfig.addAllowedHeader("*");
+                            corsConfig.setAllowCredentials(true);
+                            return corsConfig;
+                        })
+                )
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(sessionManag->

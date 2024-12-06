@@ -67,7 +67,7 @@ public class UserService {
             if(error instanceof UserNotFoundException){
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", error.getMessage()));
             }else{
-                throw new Exception("Falha ao retornar usuários!");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("");
             }
 
         }
