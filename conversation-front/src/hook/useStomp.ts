@@ -3,6 +3,10 @@ import { useEffect, useState } from "react";
 import Stomp from "stompjs";
 import SockJS from "sockjs-client";
 import { format } from "date-fns";
+import { getCookie } from "cookies-next";
+import { decodeToken } from "react-jwt";
+import { toastError } from "@/services/toast.service";
+import { Api } from "@/services/axios.service";
 
 interface IPropsSendGlobalMesssage {
   url: string;
@@ -11,25 +15,25 @@ interface IPropsSendGlobalMesssage {
 }
 
 interface IPropsSendPrivateMessage {
-  sender: string;
+  sender: any;
   recipient: string;
   message: string;
   url: string;
+  token?: string;
 }
 
-const useWebSocket = (
-  urlConection: string,
-  chanel: string,
-  privateChanel: string
-) => {
+const useWebSocket = (urlConection: string, chanel: string) => {
   const [webSocket, setWebSocket] = useState<Stomp.Client | null>(null);
-  const [globalMessages, setGlobalMessages] = useState<string[]>([]);
+  const [globalMessages, setGlobalMessages] = useState<IGlobalMsgPayload[]>([]);
   const [privateMessages, setPrivateMessages] = useState<IPrivateMsgPayload[]>(
     []
   );
 
   useEffect(() => {
     if (!webSocket) {
+      const token = getCookie("token") as string;
+      const decodedToken: IPayload = decodeToken(token) as any;
+
       const socket = new SockJS(urlConection);
       const stompClient = Stomp.over(socket);
       //Faz a conexão com o Canal e busca mensagens
@@ -45,24 +49,29 @@ const useWebSocket = (
         });
 
         //Faz a inscrição no canal privado pra receber todas as mensagens privadas
-        stompClient.subscribe(privateChanel, (privateMessage) => {
-          const recivedPrivateMessages = JSON.parse(privateMessage.body);
-          console.log(recivedPrivateMessages);
-          setPrivateMessages((msg) => [...msg, recivedPrivateMessages]);
-        });
+        stompClient.subscribe(
+          `/private/${decodedToken.userId}/restrict/messages`,
+          (privateMessage) => {
+            const recivedPrivateMessages = JSON.parse(privateMessage.body);
+            console.log(privateMessage);
+            setPrivateMessages((msg) => [...msg, recivedPrivateMessages]);
+          }
+        );
       });
 
       setWebSocket(stompClient);
 
       return () => {
-        stompClient.disconnect(() => {
-          console.log("WebSocket Disconectado!");
-        });
+        if (stompClient.connected) {
+          stompClient.disconnect(() => {
+            console.log("WebSocket Disconectado!");
+          });
+        }
       };
     }
-  }, [urlConection, chanel, privateChanel]);
+  }, [urlConection, chanel]);
 
-  function sendGlobalMessage({
+  async function sendGlobalMessage({
     message,
     sender,
     url,
@@ -72,15 +81,16 @@ const useWebSocket = (
         sender,
         message,
       };
-      webSocket.send(url, {}, JSON.stringify(bodyMessage));
+      await webSocket.send(url, {}, JSON.stringify(bodyMessage));
     }
   }
 
-  function sendPrivateMessage({
+  async function sendPrivateMessage({
     message,
     recipient,
     sender,
     url,
+    token,
   }: IPropsSendPrivateMessage) {
     if (webSocket?.connected) {
       const data = {
@@ -88,18 +98,32 @@ const useWebSocket = (
         recipient,
         sender,
       };
-      webSocket.send(url, {}, JSON.stringify(data));
+      try {
+        const recipientExists = await Api.get(`/findRecipient/${recipient}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
 
-      // Adiciona a mensagem enviada ao estado local imediatamente
-      setPrivateMessages((prevMessages) => [
-        ...prevMessages,
-        {
-          sender,
-          recipient,
-          message,
-          dateTime: format(new Date(), "dd-MM-yyyy 'às' HH:mm"),
-        },
-      ]);
+        if (recipientExists.data.recipientExists === false) {
+          toastError("Usuário inexistente!");
+          return;
+        }
+        await webSocket.send(url, {}, JSON.stringify(data));
+        // Adiciona a mensagem enviada ao estado local imediatamente
+        setPrivateMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            sender,
+            recipient,
+            message,
+            dateTime: format(new Date(), "dd-MM-yyyy 'às' HH:mm"),
+          },
+        ]);
+      } catch (error) {
+        toastError("Erro ao enviar mensagem!");
+      }
     }
   }
 

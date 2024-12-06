@@ -8,27 +8,29 @@ import useWebSocket from "@/hook/useStomp";
 import { getCookie } from "cookies-next";
 import { decodeToken } from "react-jwt";
 import { format } from "date-fns";
+import { toastError } from "@/services/toast.service";
 
 export default function Chat() {
+  const [userId, setUserId] = useState<string>("");
+  const [sub, setSub] = useState<string>("");
+  const [nickname, setNickname] = useState<string>("");
   const token = getCookie("token") as string;
-
-  const [userId, setUserId] = useState("");
-  const [sub, setSub] = useState("");
-
   useEffect(() => {
-    if (token) {
-      const decodedToken: IPayload = decodeToken(token) as any;
-      if (decodedToken) {
-        setUserId(decodedToken.userId);
-        setSub(decodedToken.sub);
+    (async () => {
+      if (token) {
+        const decodedToken: IPayload = (await decodeToken(token)) as any;
+        if (decodedToken) {
+          setUserId(decodedToken.userId);
+          setSub(decodedToken.sub);
+          setNickname(decodedToken.nickname);
+        }
       }
-    }
-  }, [token]);
+    })();
+  }, []);
 
   const webSocket = useWebSocket(
     "http://localhost:8080/conversation/connect",
-    "/global/messages",
-    `/private/${sub}/restrict/messages`
+    "/global/messages"
   );
 
   const [globalMessage, setGlobalMessage] = useState("");
@@ -52,20 +54,28 @@ export default function Chat() {
       if (
         privateMessage !== "" &&
         privateMessage !== null &&
-        recipient !== null
+        recipient !== null &&
+        recipient !== ""
       ) {
-        webSocket.sendPrivateMessage({
-          message: privateMessage,
-          sender: sub,
-          recipient,
-          url: `/app/privateChat`,
-        });
+        if (recipient !== sub) {
+          webSocket.sendPrivateMessage({
+            message: privateMessage,
+            sender: sub,
+            recipient,
+            url: `/app/privateChat`,
+            token: token,
+          });
 
-        setPrivateMessage("");
+          setPrivateMessage("");
+        } else {
+          toastError("Você não pode enviar mensagem para você mesmo!");
+        }
+      } else {
+        toastError("Preencha os campos!");
       }
     } catch (error) {
       console.log(error);
-      alert("Email de usuário não encontrado!");
+      toastError("Email de usuário não encontrado!");
     }
   }
 
@@ -76,9 +86,11 @@ export default function Chat() {
           <h1>Chat Global</h1>
           {webSocket.globalMessages.map((msg: any, index) => (
             <ListItem key={index}>
-              {`${format(new Date(), "dd-MM-yyyy 'às' HH:mm")} @${msg.user}: ${
-                msg.message
-              }`}
+              {msg.sender === nickname
+                ? `${msg.dateTime.replace("T", " às ")} @Eu: ${msg.message}`
+                : `${msg.dateTime.replace("T", " às ")} @${msg.sender}: ${
+                    msg.message
+                  }`}
             </ListItem>
           ))}
         </List>

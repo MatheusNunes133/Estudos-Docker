@@ -13,3 +13,9 @@ interface IPrivateMsgPayload {
   message: string;
   dateTime: string;
 }
+
+interface IGlobalMsgPayload {
+  sender: string;
+  message: string;
+  dateTime: string;
+}
